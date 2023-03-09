@@ -1,7 +1,5 @@
 package com.example.manipulatedimagerecommenderanddetector.ui.main;
 
-import static android.content.ContentValues.TAG;
-
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Bundle;
@@ -14,31 +12,28 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.GridLayout;
-import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
-import com.example.manipulatedimagerecommenderanddetector.R;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Random;
 
 public class PlaceholderFragment extends Fragment {
 
     private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final int REQUEST_IMAGE = 100;
 
     private PageViewModel pageViewModel;
     private FragmentMainBinding binding;
 
-    private ImageView[] imageViews;
     private FirebaseStorage storage = FirebaseStorage.getInstance();
+    private StorageReference imagesRef = storage.getReference().child("images");
+
+    private boolean imageJustUploaded = false;
+    private StorageReference uploadedImageRef;
 
     public static PlaceholderFragment newInstance(int index) {
         PlaceholderFragment fragment = new PlaceholderFragment();
@@ -65,14 +60,26 @@ public class PlaceholderFragment extends Fragment {
         View rootView = binding.getRoot();
 
         ArrayList<String> imageFilenames = new ArrayList<>();
-        StorageReference imagesRef = storage.getReference().child("images");
         imagesRef.listAll()
                 .addOnSuccessListener(listResult -> {
                     for (StorageReference item : listResult.getItems()) {
                         String filename = item.getName();
-                        if (filename.endsWith(".jpg")) {
-                            imageFilenames.add(filename);
+                        imageFilenames.add(filename);
+                    }
+
+                    // Check if an image has just been uploaded
+                    if (imageJustUploaded) {
+                        // If an image has just been uploaded, make sure it's the first image on the screen
+                        String uploadedImageFilename = uploadedImageRef.getName();
+                        int index = imageFilenames.indexOf(uploadedImageFilename);
+                        if (index > 0) {
+                            imageFilenames.remove(index);
+                            imageFilenames.add(0, uploadedImageFilename);
                         }
+
+                        // Reset the flag and the reference to the uploaded image
+                        imageJustUploaded = false;
+                        uploadedImageRef = null;
                     }
 
                     // Randomly select 6 images from the list of filenames
@@ -99,4 +106,69 @@ public class PlaceholderFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
+    public void setImageJustUploaded(boolean justUploaded, StorageReference uploadedImageRef) {
+        imageJustUploaded = justUploaded;
+        this.uploadedImageRef = uploadedImageRef;
+        Log.d("PlaceholderFragment", "Image just uploaded: " + justUploaded);
+        Log.d("PlaceholderFragment", "Uploaded image reference: " + uploadedImageRef);
+    }
+
+    public void refreshGrid() {
+        ArrayList<String> imageFilenames = new ArrayList<>();
+        StorageReference imagesRef = storage.getReference().child("images");
+        imagesRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    for (StorageReference item : listResult.getItems()) {
+                        String filename = item.getName();
+                        imageFilenames.add(filename);
+                    }
+
+                    // Randomly select 6 images from the list of filenames
+                    ArrayList<String> selectedImageFilenames = new ArrayList<>();
+                    Collections.shuffle(imageFilenames);
+
+                    for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
+                        selectedImageFilenames.add(imageFilenames.get(i));
+                    }
+
+                    // Check if an image has just been uploaded
+                    if (imageJustUploaded && uploadedImageRef != null) {
+                        // If an image has just been uploaded, make sure it's the first image on the screen
+                        String uploadedImageFilename = uploadedImageRef.getName();
+                        Log.d("PlaceholderFragment", "Uploaded image filename: " + uploadedImageFilename);
+                        int index = imageFilenames.indexOf(uploadedImageFilename);
+                        Log.d("PlaceholderFragment", "Uploaded image index: " + index);
+                        if (index >= 0 && index < 6) {
+                            // If the uploaded image is already in the selected images, move it to the first position
+                            selectedImageFilenames.remove(uploadedImageFilename);
+                            selectedImageFilenames.add(0, uploadedImageFilename);
+                        } else if (index >= 6) {
+                            // If the uploaded image is not in the selected images but is in the full list, replace the last selected image with it
+                            selectedImageFilenames.remove(selectedImageFilenames.size() - 1);
+                            selectedImageFilenames.add(0, uploadedImageFilename);
+                        } else {
+                            // If the uploaded image is not in the full list, do nothing
+                        }
+
+                        // Reset the flag and the reference to the uploaded image
+                        imageJustUploaded = false;
+                        uploadedImageRef = null;
+                    }
+
+                    // Set the adapter for the grid view
+                    GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
+                    binding.gridView.setAdapter(gridAdapter);
+                })
+                .addOnFailureListener(exception -> {
+                    // Handle errors while retrieving the list of image filenames from Firebase Storage
+                    // ...
+                });
+    }
+
+
+
+
+
 }
+
