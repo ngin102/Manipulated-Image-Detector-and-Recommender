@@ -1,6 +1,10 @@
 package com.example.manipulatedimagerecommenderanddetector;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,41 +15,51 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+
 public class GridAdapter extends BaseAdapter {
 
-    private Context context;
-    private int[] imageIDs;
+    private Context context; // Context of the app
+    private List<String> imageFilenames; // List of filenames of the images to be displayed in the grid
 
     LayoutInflater inflater;
 
-    public GridAdapter(Context context, int[] imageIDs) {
+    // Constructor to initialize the context and image filenames
+    public GridAdapter(Context context, List<String> imageFilenames) {
         this.context = context;
-        this.imageIDs = imageIDs;
+        this.imageFilenames = imageFilenames;
     }
 
+    // Returns the number of images in the grid
     @Override
     public int getCount() {
-        return imageIDs.length;
+        return imageFilenames.size();
     }
 
+    // Returns null
     @Override
     public Object getItem(int pos) {
         return null;
     }
 
+    // Returns 0
     public long getItemId(int pos) {
         return 0;
     }
 
+    // Creates and returns the view for each image in the grid
     @Override
     public View getView(int pos, View convertView, ViewGroup parent) {
         if (inflater == null) {
@@ -58,12 +72,37 @@ public class GridAdapter extends BaseAdapter {
         ImageView imageView = convertView.findViewById(R.id.grid_image);
         TextView imageLabel = convertView.findViewById(R.id.image_label);
 
+        String filename = imageFilenames.get(pos);
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference imageRef = storage.getReference().child("images/" + filename);
+
+        imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                // Use the download URL to load the image in your app
+                String downloadUrl = uri.toString();
+                Picasso.get().load(downloadUrl).into(imageView);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Handle any errors while retrieving the download URL
+                Log.e(TAG, "Error getting download URL", e);
+            }
+        });
+
+        /*
         // Load the image into the image view using Picasso
-        Picasso.get().load(imageIDs[pos]).into(imageView);
+        //Uri imageUri = Uri.parse("gs://image-recommender-and-detector.appspot.com/images/" + imageFilenames.get(pos) + "?alt=media");
+        Uri imageUri = Uri.parse("https://www.citypng.com/public/uploads/preview/-11590487324f5c6zxnady.png");
+        Picasso.get().load(imageUri).into(imageView);
+*/
+
+        String filenameWithoutExtension = filename.substring(0, filename.length() - 4);
 
         // Check the image authenticity status in Firebase Realtime Database
-       // String filename = "image" + pos + ".jpg";
-        DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity").child("au_ani_30697");
+        DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity").child(filenameWithoutExtension);
         authenticityRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -86,9 +125,8 @@ public class GridAdapter extends BaseAdapter {
             }
         });
 
+
         return convertView;
     }
 
-
 }
-

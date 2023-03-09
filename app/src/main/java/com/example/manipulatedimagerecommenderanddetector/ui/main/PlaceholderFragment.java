@@ -22,6 +22,8 @@ import android.widget.Toast;
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
 import com.example.manipulatedimagerecommenderanddetector.R;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ public class PlaceholderFragment extends Fragment {
     private FragmentMainBinding binding;
 
     private ImageView[] imageViews;
+    private FirebaseStorage storage = FirebaseStorage.getInstance();
 
     public static PlaceholderFragment newInstance(int index) {
         PlaceholderFragment fragment = new PlaceholderFragment();
@@ -61,37 +64,32 @@ public class PlaceholderFragment extends Fragment {
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
 
-        // Get an array of all drawable resources
-        Field[] drawableFields = R.drawable.class.getFields();
+        ArrayList<String> imageFilenames = new ArrayList<>();
+        StorageReference imagesRef = storage.getReference().child("images");
+        imagesRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    for (StorageReference item : listResult.getItems()) {
+                        String filename = item.getName();
+                        if (filename.endsWith(".jpg")) {
+                            imageFilenames.add(filename);
+                        }
+                    }
 
-        // Filter the drawable resources to get only the images we want
-        ArrayList<Integer> drawableImageIds = new ArrayList<>();
-        for (Field field : drawableFields) {
-            String name = field.getName();
-            if (! name.equals("ic_launcher_background") && ! name.equals("ic_launcher_foreground"))  {
-                try {
-                    int drawableId = field.getInt(null);
-                    drawableImageIds.add(drawableId);
-                } catch (IllegalAccessException e) {
-                    Log.e(TAG, "Error getting drawable ID", e);
-                }
-            }
-        }
+                    // Randomly select 6 images from the list of filenames
+                    ArrayList<String> selectedImageFilenames = new ArrayList<>();
+                    Collections.shuffle(imageFilenames);
+                    for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
+                        selectedImageFilenames.add(imageFilenames.get(i));
+                    }
 
-        // Randomly select 6 images from the filtered drawable resources
-        ArrayList<Integer> selectedImageIds = new ArrayList<>();
-        Collections.shuffle(drawableImageIds);
-        for (int i = 0; i < 6 && i < drawableImageIds.size(); i++) {
-            selectedImageIds.add(drawableImageIds.get(i));
-        }
-
-        // Convert the selected image IDs to an array and set it as the adapter for the grid view
-        int[] images = new int[selectedImageIds.size()];
-        for (int i = 0; i < selectedImageIds.size(); i++) {
-            images[i] = selectedImageIds.get(i);
-        }
-        GridAdapter gridAdapter = new GridAdapter(getActivity(), images);
-        binding.gridView.setAdapter(gridAdapter);
+                    // Set the adapter for the grid view
+                    GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
+                    binding.gridView.setAdapter(gridAdapter);
+                })
+                .addOnFailureListener(exception -> {
+                    // Handle errors while retrieving the list of image filenames from Firebase Storage
+                    // ...
+                });
 
         return rootView;
     }
