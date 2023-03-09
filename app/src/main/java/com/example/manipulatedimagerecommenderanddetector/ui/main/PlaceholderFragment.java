@@ -16,17 +16,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
-import com.example.manipulatedimagerecommenderanddetector.R;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Random;
 
 public class PlaceholderFragment extends Fragment {
 
@@ -48,50 +50,64 @@ public class PlaceholderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize Firebase
+        FirebaseApp.initializeApp(getContext());
+
         pageViewModel = new ViewModelProvider(this).get(PageViewModel.class);
         int index = 1;
         if (getArguments() != null) {
             index = getArguments().getInt(ARG_SECTION_NUMBER);
         }
         pageViewModel.setIndex(index);
+
+        // Retrieve the images from Firebase Storage
+        retrieveImagesFromFirebaseStorage();
+    }
+
+    private void retrieveImagesFromFirebaseStorage() {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+        StorageReference imagesRef = storageRef.child("images");
+
+        // Retrieve the image URLs from Firebase Storage
+        imagesRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    ArrayList<String> imageUrls = new ArrayList<>();
+                    for (StorageReference item : listResult.getItems()) {
+                        item.getDownloadUrl()
+                                .addOnSuccessListener(uri -> {
+                                    imageUrls.add(uri.toString());
+                                    // Check if we have retrieved enough images
+                                    if (imageUrls.size() == 6) {
+                                        // Display the images
+                                        displayImages(imageUrls);
+                                    }
+                                })
+                                .addOnFailureListener(exception -> {
+                                    // Handle unsuccessful downloads
+                                });
+                    }
+                })
+                .addOnFailureListener(exception -> {
+                    // Handle unsuccessful listing
+                });
+    }
+
+    private void displayImages(ArrayList<String> imageUrls) {
+        // Convert the image URLs to an array
+        String[] urlsArray = new String[imageUrls.size()];
+        urlsArray = imageUrls.toArray(urlsArray);
+
+        // Set the modified GridAdapter as the adapter for the GridView
+        GridAdapter gridAdapter = new GridAdapter(getContext(), urlsArray);
+        binding.gridView.setAdapter(gridAdapter);
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
-
-        // Get an array of all drawable resources
-        Field[] drawableFields = R.drawable.class.getFields();
-
-        // Filter the drawable resources to get only the images we want
-        ArrayList<Integer> drawableImageIds = new ArrayList<>();
-        for (Field field : drawableFields) {
-            String name = field.getName();
-            if (! name.equals("ic_launcher_background") && ! name.equals("ic_launcher_foreground"))  {
-                try {
-                    int drawableId = field.getInt(null);
-                    drawableImageIds.add(drawableId);
-                } catch (IllegalAccessException e) {
-                    Log.e(TAG, "Error getting drawable ID", e);
-                }
-            }
-        }
-
-        // Randomly select 6 images from the filtered drawable resources
-        ArrayList<Integer> selectedImageIds = new ArrayList<>();
-        Collections.shuffle(drawableImageIds);
-        for (int i = 0; i < 6 && i < drawableImageIds.size(); i++) {
-            selectedImageIds.add(drawableImageIds.get(i));
-        }
-
-        // Convert the selected image IDs to an array and set it as the adapter for the grid view
-        int[] images = new int[selectedImageIds.size()];
-        for (int i = 0; i < selectedImageIds.size(); i++) {
-            images[i] = selectedImageIds.get(i);
-        }
-        GridAdapter gridAdapter = new GridAdapter(getActivity(), images);
-        binding.gridView.setAdapter(gridAdapter);
 
         return rootView;
     }

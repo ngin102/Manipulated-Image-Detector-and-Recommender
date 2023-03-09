@@ -1,58 +1,59 @@
 package com.example.manipulatedimagerecommenderanddetector;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 public class GridAdapter extends BaseAdapter {
 
-    Context context;
-    int[] image;
+    private final Context mContext;
+    private final String[] mImageUrls;
 
-    LayoutInflater inflater;
-
-    public GridAdapter(Context context, int[] image)
-    {
-        this.context = context;
-        this.image = image;
+    public GridAdapter(Context context, String[] imageUrls) {
+        mContext = context;
+        mImageUrls = imageUrls;
     }
 
     @Override
-    public int getCount()
-    {
-        return image.length;
+    public int getCount() {
+        return mImageUrls.length;
     }
 
     @Override
-    public Object getItem(int pos)
-    {
+    public Object getItem(int position) {
         return null;
     }
 
-    public long getItemId(int pos)
-    {
+    @Override
+    public long getItemId(int position) {
         return 0;
     }
 
     @Override
-    public View getView(int pos, View convertView, ViewGroup parent)
-    {
-        if (inflater == null) {
-            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        }
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imageView;
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.grid_item, null);
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.grid_item, parent, false);
+            imageView = convertView.findViewById(R.id.grid_image);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setPadding(5, 5, 5, 5);
+        } else {
+            imageView = (ImageView) convertView.findViewById(R.id.grid_image);
         }
 
-        ImageView imageView = convertView.findViewById(R.id.grid_image);
-
-        imageView.setImageResource(image[pos]);
+        // Load the image into the ImageView using Picasso
+        Picasso.get().load(mImageUrls[position]).into(imageView);
 
         return convertView;
     }
+
 
 }
