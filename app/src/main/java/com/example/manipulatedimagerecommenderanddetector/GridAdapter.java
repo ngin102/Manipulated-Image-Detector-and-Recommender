@@ -92,14 +92,7 @@ public class GridAdapter extends BaseAdapter {
             }
         });
 
-        /*
-        // Load the image into the image view using Picasso
-        //Uri imageUri = Uri.parse("gs://image-recommender-and-detector.appspot.com/images/" + imageFilenames.get(pos) + "?alt=media");
-        Uri imageUri = Uri.parse("https://www.citypng.com/public/uploads/preview/-11590487324f5c6zxnady.png");
-        Picasso.get().load(imageUri).into(imageView);
-*/
-
-        String filenameWithoutExtension = filename.substring(0, filename.length() - 4);
+        String filenameWithoutExtension = filename.replaceAll("\\.[^.]+$", "");
 
         // Check the image authenticity status in Firebase Realtime Database
         DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity").child(filenameWithoutExtension);
