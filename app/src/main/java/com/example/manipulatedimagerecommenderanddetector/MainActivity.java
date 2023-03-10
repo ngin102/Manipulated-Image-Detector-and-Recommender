@@ -1,20 +1,19 @@
 package com.example.manipulatedimagerecommenderanddetector;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager.widget.ViewPager;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.ViewPager;
 
 import com.example.manipulatedimagerecommenderanddetector.databinding.ActivityMainBinding;
 import com.example.manipulatedimagerecommenderanddetector.ui.main.PlaceholderFragment;
@@ -37,10 +36,7 @@ import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
     private ActivityResultLauncher<Intent> activityResultLauncher;
-    private static final int REQUEST_IMAGE = 101;
-    private FirebaseStorage storage;
     private StorageReference imagesRef;
 
     private static final int INPUT_SIZE = 224;
@@ -51,10 +47,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        com.example.manipulatedimagerecommenderanddetector.databinding.ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        storage = FirebaseStorage.getInstance();
+        FirebaseStorage storage = FirebaseStorage.getInstance();
         imagesRef = storage.getReference().child("images");
 
         // Create the adapter that will return a fragment for each of the
@@ -70,20 +66,18 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fab = binding.fab;
         View rootView = binding.getRoot();
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                activityResultLauncher.launch(Intent.createChooser(intent, "Select Picture"));
-            }
+        fab.setOnClickListener(view -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            activityResultLauncher.launch(Intent.createChooser(intent, "Select Picture"));
         });
 
         activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
                         // Get the URI of the selected image
+                        assert result.getData() != null;
                         Uri imageUri = result.getData().getData();
 
                         // Get a reference to the image file in Firebase Storage
@@ -108,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                                 // Use the image file with the model to determine its authenticity and save the result to Firebase Database
                                 try {
                                     // Load the TFLite model
-                                    Interpreter tflite = new Interpreter(loadModelFile(this, "manipulation_detector.tflite"));
+                                    Interpreter tflite = new Interpreter(loadModelFile(this, "manipulation_detector_v2.tflite"));
 
                                     // Load the image from URI
                                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
@@ -135,19 +129,16 @@ public class MainActivity extends AppCompatActivity {
 
                                     // Save the authenticity to Firebase Database
                                     saveImageAuthenticityToDatabase(imageRef.getName(), authenticity);
+                                    Snackbar.make(rootView, "Image uploaded successfully", Snackbar.LENGTH_LONG).show();
 
                                 } catch (IOException e) {
                                     Log.d("MainActivity", "Model not run!");
                                     e.printStackTrace();
                                 }
+                            }).addOnFailureListener(e -> Snackbar.make(rootView, "Failed to get download URL: " + e.getMessage(), Snackbar.LENGTH_LONG).show());
 
-                                Snackbar.make(rootView, "Image uploaded successfully", Snackbar.LENGTH_LONG).show();
-                            }).addOnFailureListener(e -> {
-                                Snackbar.make(rootView, "Failed to get download URL: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
-                            });
-                        }).addOnFailureListener(e -> {
-                            Snackbar.make(rootView, "Failed to upload image: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
-                        });
+
+                        }).addOnFailureListener(e -> Snackbar.make(rootView, "Failed to upload image: " + e.getMessage(), Snackbar.LENGTH_LONG).show());
                     }
                 });
     }
@@ -164,12 +155,8 @@ public class MainActivity extends AppCompatActivity {
     private void saveImageAuthenticityToDatabase(String filename, String authenticity) {
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("Image Authenticity");
         databaseRef.child(filename).setValue(authenticity)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("MainActivity", "Image authenticity saved to database for filename: " + filename);
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("MainActivity", "Failed to save image authenticity to database for filename: " + filename);
-                });
+                .addOnSuccessListener(aVoid -> Log.d("MainActivity", "Image authenticity saved to database for filename: " + filename))
+                .addOnFailureListener(e -> Log.d("MainActivity", "Failed to save image authenticity to database for filename: " + filename));
     }
 
     private float[][][][] convertBitmapToFloatArray(Bitmap bitmap) {
@@ -185,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return floatValues;
     }
-
 
 }
 
