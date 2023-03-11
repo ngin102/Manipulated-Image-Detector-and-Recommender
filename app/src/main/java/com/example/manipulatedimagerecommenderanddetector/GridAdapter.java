@@ -137,7 +137,7 @@ public class GridAdapter extends BaseAdapter {
 
                     // Set the badge image based on the image authenticity status
                     if (tags != null) {
-                        imageTags.setText(tags);
+                        imageTags.setText("ML Generated Tags: " + tags);
                     }
                 }
             }

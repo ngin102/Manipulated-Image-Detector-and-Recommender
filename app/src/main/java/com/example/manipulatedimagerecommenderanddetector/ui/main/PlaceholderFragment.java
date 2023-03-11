@@ -15,6 +15,11 @@ import android.view.ViewGroup;
 
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -59,39 +64,98 @@ public class PlaceholderFragment extends Fragment {
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
 
+
         ArrayList<String> imageFilenames = new ArrayList<>();
         imagesRef.listAll()
                 .addOnSuccessListener(listResult -> {
                     for (StorageReference item : listResult.getItems()) {
                         String filename = item.getName();
-                        imageFilenames.add(filename);
-                    }
 
-                    // Check if an image has just been uploaded
-                    if (imageJustUploaded) {
-                        // If an image has just been uploaded, make sure it's the first image on the screen
-                        String uploadedImageFilename = uploadedImageRef.getName();
-                        int index = imageFilenames.indexOf(uploadedImageFilename);
-                        if (index > 0) {
-                            imageFilenames.remove(index);
-                            imageFilenames.add(0, uploadedImageFilename);
+                        // Check if the current page is the second page and skip manipulated images
+                        if (pageViewModel.getIndex() == 2) {
+                            // Check the image authenticity status in Firebase Realtime Database
+                            DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity").child(filename);
+                            authenticityRef.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot.exists()) {
+                                        String authenticity = dataSnapshot.getValue(String.class);
+
+                                        // Set the badge image based on the image authenticity status
+                                        if (authenticity != null && authenticity.equals("au")) {
+                                            imageFilenames.add(filename);
+                                            Log.d("PlaceholderFragment", "Image we are looking at B: " + authenticity);
+                                        } else if (authenticity != null && authenticity.equals("tp")) {
+                                            Log.d("PlaceholderFragment", "Image we are looking at B: " + authenticity);
+                                        }
+                                        // Check if an image has just been uploaded
+                                        if (imageJustUploaded) {
+                                            // If an image has just been uploaded, make sure it's the first image on the screen
+                                            String uploadedImageFilename = uploadedImageRef.getName();
+                                            int index = imageFilenames.indexOf(uploadedImageFilename);
+                                            if (index > 0) {
+                                                imageFilenames.remove(index);
+                                                imageFilenames.add(0, uploadedImageFilename);
+                                            }
+
+                                            // Reset the flag and the reference to the uploaded image
+                                            imageJustUploaded = false;
+                                            uploadedImageRef = null;
+                                        }
+
+                                        // Randomly select 6 images from the list of filenames
+                                        ArrayList<String> selectedImageFilenames = new ArrayList<>();
+                                        Collections.shuffle(imageFilenames);
+                                        for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
+                                            selectedImageFilenames.add(imageFilenames.get(i));
+                                        }
+
+                                        // Set the adapter for the grid view
+                                        GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
+                                        binding.gridView.setAdapter(gridAdapter);
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+                                    // Handle errors while retrieving the image authenticity status
+                                    // ...
+                                }
+                            });
+                            continue;
                         }
 
-                        // Reset the flag and the reference to the uploaded image
-                        imageJustUploaded = false;
-                        uploadedImageRef = null;
-                    }
+                        else
+                        {
+                            imageFilenames.add(filename);
 
-                    // Randomly select 6 images from the list of filenames
-                    ArrayList<String> selectedImageFilenames = new ArrayList<>();
-                    Collections.shuffle(imageFilenames);
-                    for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
-                        selectedImageFilenames.add(imageFilenames.get(i));
-                    }
+                            // Check if an image has just been uploaded
+                            if (imageJustUploaded) {
+                                // If an image has just been uploaded, make sure it's the first image on the screen
+                                String uploadedImageFilename = uploadedImageRef.getName();
+                                int index = imageFilenames.indexOf(uploadedImageFilename);
+                                if (index > 0) {
+                                    imageFilenames.remove(index);
+                                    imageFilenames.add(0, uploadedImageFilename);
+                                }
 
-                    // Set the adapter for the grid view
-                    GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
-                    binding.gridView.setAdapter(gridAdapter);
+                                // Reset the flag and the reference to the uploaded image
+                                imageJustUploaded = false;
+                                uploadedImageRef = null;
+                            }
+
+                            // Randomly select 6 images from the list of filenames
+                            ArrayList<String> selectedImageFilenames = new ArrayList<>();
+                            Collections.shuffle(imageFilenames);
+                            for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
+                                selectedImageFilenames.add(imageFilenames.get(i));
+                            }
+
+                            // Set the adapter for the grid view
+                            GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
+                            binding.gridView.setAdapter(gridAdapter);
+                        }
+                    }
                 })
                 .addOnFailureListener(exception -> {
                     // Handle errors while retrieving the list of image filenames from Firebase Storage

@@ -16,6 +16,10 @@ public class PageViewModel extends ViewModel {
         }
     });
 
+    public int getIndex()
+    {
+        return mIndex.getValue();
+    }
     public void setIndex(int index) {
         mIndex.setValue(index);
     }

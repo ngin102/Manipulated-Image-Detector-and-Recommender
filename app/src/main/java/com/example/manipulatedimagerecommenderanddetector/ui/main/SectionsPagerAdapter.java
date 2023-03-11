@@ -1,14 +1,15 @@
 package com.example.manipulatedimagerecommenderanddetector.ui.main;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import com.example.manipulatedimagerecommenderanddetector.R;
 
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
@@ -16,8 +17,9 @@ import com.example.manipulatedimagerecommenderanddetector.R;
  */
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
+    @SuppressLint("SupportAnnotationUsage")
     @StringRes
-    private static final int[] TAB_TITLES = new int[]{R.string.tab_text_1, R.string.tab_text_2};
+    private static final String[] TAB_TITLES = new String[]{"Authentic and Manipulated", "Authentic Only"};
     private final Context mContext;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
@@ -25,17 +27,23 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         mContext = context;
     }
 
+    @NonNull
     @Override
     public Fragment getItem(int position) {
         // getItem is called to instantiate the fragment for the given page.
         // Return a PlaceholderFragment (defined as a static inner class below).
-        return PlaceholderFragment.newInstance(position + 1);
+        if (position == 0) {
+            return PlaceholderFragment.newInstance(position + 1);
+        } else {
+            PlaceholderFragment fragment = PlaceholderFragment.newInstance(2);
+            return fragment;
+        }
     }
 
     @Nullable
     @Override
     public CharSequence getPageTitle(int position) {
-        return mContext.getResources().getString(TAB_TITLES[position]);
+        return TAB_TITLES[position];
     }
 
     @Override
