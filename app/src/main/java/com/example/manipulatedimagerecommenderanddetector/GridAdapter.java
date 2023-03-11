@@ -3,6 +3,8 @@ package com.example.manipulatedimagerecommenderanddetector;
 import static android.content.ContentValues.TAG;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,8 +26,15 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.label.ImageLabel;
+import com.google.mlkit.vision.label.ImageLabeler;
+import com.google.mlkit.vision.label.ImageLabeling;
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -71,6 +80,7 @@ public class GridAdapter extends BaseAdapter {
 
         ImageView imageView = convertView.findViewById(R.id.grid_image);
         TextView imageLabel = convertView.findViewById(R.id.image_label);
+        TextView imageTags = convertView.findViewById(R.id.image_tags);
 
         String filename = imageFilenames.get(pos);
 
@@ -117,6 +127,28 @@ public class GridAdapter extends BaseAdapter {
                 // ...
             }
         });
+
+        DatabaseReference tagsRef = FirebaseDatabase.getInstance().getReference().child("Image Tags").child(filenameWithoutExtension);
+        tagsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String tags = dataSnapshot.getValue(String.class);
+
+                    // Set the badge image based on the image authenticity status
+                    if (tags != null) {
+                        imageTags.setText(tags);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors while retrieving the image authenticity status
+                // ...
+            }
+        });
+
 
 
         return convertView;
