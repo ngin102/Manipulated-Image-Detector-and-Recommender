@@ -42,12 +42,17 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+
+    implementation 'com.google.firebase:firebase-database:19.7.0'
+    implementation 'com.google.firebase:firebase-storage:19.2.0'
     implementation platform('com.google.firebase:firebase-bom:31.2.3')
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'org.tensorflow:tensorflow-lite:2.8.0'
-    implementation 'com.google.firebase:firebase-database:19.7.0'
-    implementation 'com.squareup.picasso:picasso:2.71828'
-    implementation 'com.google.firebase:firebase-storage:19.2.0'
+
     implementation 'com.google.mlkit:image-labeling:17.0.7'
+
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
+    implementation 'org.tensorflow:tensorflow-lite:2.8.0'
 
 }

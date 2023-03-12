@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "558432270833",
-    "project_id": "image-recommender-and-detector",
-    "storage_bucket": "image-recommender-and-detector.appspot.com"
+    "project_number": "497006058228",
+    "project_id": "image-detector-and-recom-8f8d4",
+    "storage_bucket": "image-detector-and-recom-8f8d4.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:558432270833:android:2e17e3a912a1b14f49ac50",
+        "mobilesdk_app_id": "1:497006058228:android:edddafcba13e411862dca1",
         "android_client_info": {
           "package_name": "com.example.manipulatedimagerecommenderanddetector"
         }
       },
       "oauth_client": [
         {
-          "client_id": "558432270833-vill75d6c21quin1eb4pq6oh3renua2c.apps.googleusercontent.com",
+          "client_id": "497006058228-jp6fdv6j2o29o1ktcn2fuuok1ko6acte.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAT_VnVly6d89c6Jnv1JPxMWpfXiqX2MTQ"
+          "current_key": "AIzaSyCWpH-s3UjZV2tY4RG4QI3Q6lYD5ARNvew"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "558432270833-vill75d6c21quin1eb4pq6oh3renua2c.apps.googleusercontent.com",
+              "client_id": "497006058228-jp6fdv6j2o29o1ktcn2fuuok1ko6acte.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

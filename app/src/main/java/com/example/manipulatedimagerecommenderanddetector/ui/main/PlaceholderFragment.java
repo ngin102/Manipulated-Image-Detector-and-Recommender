@@ -266,7 +266,7 @@ public class PlaceholderFragment extends Fragment {
 
                                 imageFilenames.add(currentImageFilename);
 
-                                if (list.size() > 6) {
+                                if (list.size() > 6 || list.size() == 6) {
                                     for (int i = 0; i < 5; i++) {
                                         imageFilenames.add(list.get(i).getKey());
                                     }
