@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     // Determine the authenticity of the image based on the output
                                     String authenticity;
-                                    if (output[0][0] > 0.5) {
+                                    if (output[0][0] < 0.5) {
                                         authenticity = "tp";
                                     } else {
                                         authenticity = "au";

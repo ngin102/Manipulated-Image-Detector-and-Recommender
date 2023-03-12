@@ -33,7 +33,6 @@ import java.util.Map;
 public class PlaceholderFragment extends Fragment {
 
     private static final String ARG_SECTION_NUMBER = "section_number";
-    private static final int REQUEST_IMAGE = 100;
 
     private PageViewModel pageViewModel;
     private FragmentMainBinding binding;
@@ -213,7 +212,6 @@ public class PlaceholderFragment extends Fragment {
     }
 
     private void recommendImages(String currentImageFilename) {
-        Log.d("PlaceholderFragment", "tags: " + "HELLO");
         DatabaseReference tagsRef = FirebaseDatabase.getInstance().getReference().child("Image Tags").child(currentImageFilename);
         tagsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -235,7 +233,6 @@ public class PlaceholderFragment extends Fragment {
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             if (dataSnapshot.exists()) {
                                 HashMap<String, Double> similarImages = new HashMap<>();
-                                HashMap<String, Integer> currentTags = new HashMap<>();
 
                                 // Compute the cosine similarity between the input image and all other images
                                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -286,7 +283,6 @@ public class PlaceholderFragment extends Fragment {
                                 Log.d("PlaceholderFragment", "Similarity scores: " + similarityScoresString);
                                 Log.d("PlaceholderFragment", "# of Recommended images: " + (imageFilenames.size() - 1));
 
-
                                 // Display the recommended images in the grid view
                                 GridAdapter gridAdapter = new GridAdapter(getActivity(), imageFilenames);
                                 binding.gridView.setAdapter(gridAdapter);
@@ -308,7 +304,6 @@ public class PlaceholderFragment extends Fragment {
                 // ...
             }
         });
-
     }
 
     private double computeCosineSimilarity(Map<String, Integer> tags1, Map<String, Integer> tags2, double magnitude1) {
