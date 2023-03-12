@@ -219,8 +219,8 @@ public class MainActivity extends AppCompatActivity {
                                         String tags = "";
                                         for (int i = 0; i < labels.size(); i++) {
                                             String text = labels.get(i).getText();
-                                            float confidence = labels.get(i).getConfidence();
-                                            int index = labels.get(i).getIndex();
+                                            // float confidence = labels.get(i).getConfidence();
+                                            // int index = labels.get(i).getIndex();
 
                                             if (i != labels.size() - 1)
                                             {
@@ -265,19 +265,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Error getting download URL", e);
             }
         });
-    }
-    private float[][][][] convertBitmapToFloatArray(Bitmap bitmap) {
-        int[] intValues = new int[INPUT_SIZE * INPUT_SIZE];
-        float[][][][] floatValues = new float[1][INPUT_SIZE][INPUT_SIZE][3];
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, true);
-        resizedBitmap.getPixels(intValues, 0, resizedBitmap.getWidth(), 0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight());
-        for (int i = 0; i < intValues.length; ++i) {
-            final int val = intValues[i];
-            floatValues[0][i / INPUT_SIZE][i % INPUT_SIZE][0] = (((val >> 16) & 0xFF) - IMAGE_MEAN) / IMAGE_STD;
-            floatValues[0][i / INPUT_SIZE][i % INPUT_SIZE][1] = (((val >> 8) & 0xFF) - IMAGE_MEAN) / IMAGE_STD;
-            floatValues[0][i / INPUT_SIZE][i % INPUT_SIZE][2] = ((val & 0xFF) - IMAGE_MEAN) / IMAGE_STD;
-        }
-        return floatValues;
     }
 
 }

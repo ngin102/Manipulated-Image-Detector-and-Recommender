@@ -113,6 +113,7 @@ public class PlaceholderFragment extends Fragment {
                                         // Set the adapter for the grid view
                                         GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
                                         binding.gridView.setAdapter(gridAdapter);
+                                        gridAdapter.notifyDataSetChanged();
                                     }
                                 }
 
@@ -151,6 +152,7 @@ public class PlaceholderFragment extends Fragment {
                             // Set the adapter for the grid view
                             GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
                             binding.gridView.setAdapter(gridAdapter);
+                            gridAdapter.notifyDataSetChanged();
                         }
                     }
                 })
@@ -183,14 +185,6 @@ public class PlaceholderFragment extends Fragment {
                     for (StorageReference item : listResult.getItems()) {
                         String filename = item.getName();
                         imageFilenames.add(filename);
-                    }
-
-                    // Randomly select 6 images from the list of filenames
-                    ArrayList<String> selectedImageFilenames = new ArrayList<>();
-                    Collections.shuffle(imageFilenames);
-
-                    for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
-                        selectedImageFilenames.add(imageFilenames.get(i));
                     }
 
                     // Check if an image has just been uploaded
@@ -280,9 +274,57 @@ public class PlaceholderFragment extends Fragment {
                                 Log.d("PlaceholderFragment", "Similarity scores: " + similarityScoresString);
                                 Log.d("PlaceholderFragment", "# of Recommended images: " + (imageFilenames.size() - 1));
 
-                                // Display the recommended images in the grid view
-                                GridAdapter gridAdapter = new GridAdapter(getActivity(), imageFilenames);
-                                binding.gridView.setAdapter(gridAdapter);
+                                if (pageViewModel.getIndex() == 2) {
+                                    // Check the image authenticity status in Firebase Realtime Database
+                                    DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity");
+                                    authenticityRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot.exists()) {
+                                                ArrayList<String> filteredImageFilenames = new ArrayList<>();
+
+                                                filteredImageFilenames.add(imageFilenames.get(0));
+
+                                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                                    String filename = snapshot.getKey();
+                                                    String authenticity = snapshot.getValue(String.class);
+
+                                                    if (imageFilenames.contains(filename)) {
+                                                        if (authenticity != null && authenticity.equals("au")) {
+                                                            filteredImageFilenames.add(filename);
+                                                            Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
+                                                        }
+                                                    }
+                                                }
+
+                                                ArrayList<String> orderedFilteredList = new ArrayList<>();
+                                                for (String item : imageFilenames) {
+                                                    if (filteredImageFilenames.contains(item)) {
+                                                        orderedFilteredList.add(item);
+                                                    }
+                                                }
+
+                                                // Set the adapter for the grid view
+                                                GridAdapter gridAdapter = new GridAdapter(getActivity(), orderedFilteredList);
+                                                binding.gridView.setAdapter(gridAdapter);
+                                                gridAdapter.notifyDataSetChanged();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                                            // Handle errors while retrieving the image authenticity status
+                                            // ...
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    // Display the recommended images in the grid view
+                                    GridAdapter gridAdapter = new GridAdapter(getActivity(), imageFilenames);
+                                    binding.gridView.setAdapter(gridAdapter);
+                                    gridAdapter.notifyDataSetChanged();
+                                }
                             }
                         }
 
@@ -304,8 +346,6 @@ public class PlaceholderFragment extends Fragment {
     }
 
     private double computeCosineSimilarity(Map<String, Integer> tags1, Map<String, Integer> tags2, double magnitude1) {
-        double cosineSimilarity = 0.0;
-
         double magnitude2 = 0.0;
         for (String tag : tags2.keySet()) {
             Integer count2 = tags2.get(tag);
@@ -321,7 +361,7 @@ public class PlaceholderFragment extends Fragment {
             }
         }
 
-        cosineSimilarity = dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
+        double cosineSimilarity = dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
         return cosineSimilarity;
     }
 

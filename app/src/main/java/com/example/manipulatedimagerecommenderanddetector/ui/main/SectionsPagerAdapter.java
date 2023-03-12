@@ -19,7 +19,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @SuppressLint("SupportAnnotationUsage")
     @StringRes
-    private static final String[] TAB_TITLES = new String[]{"Authentic and Manipulated", "Authentic Only"};
+    private static final String[] TAB_TITLES = new String[]{"All Recommendations", "Authentic Recommendations Only"};
     private final Context mContext;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
