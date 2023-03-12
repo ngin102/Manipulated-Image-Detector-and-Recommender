@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -130,16 +131,25 @@ public class MainActivity extends AppCompatActivity {
                                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
 
                                     // Resize the image to the input size of the TFLite model
-                                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, true);
+                                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 256, 256, true);
 
                                     // Convert the Bitmap to a 3D float array
-                                    float[][][][] input = convertBitmapToFloatArray(resizedBitmap);
+                                    float[][][][] input = new float[1][256][256][3];
+                                    for (int x = 0; x < 256; x++) {
+                                        for (int y = 0; y < 256; y++) {
+                                            int pixel = resizedBitmap.getPixel(x, y);
+                                            input[0][x][y][0] = Color.red(pixel) / 255.0f;
+                                            input[0][x][y][1] = Color.green(pixel) / 255.0f;
+                                            input[0][x][y][2] = Color.blue(pixel) / 255.0f;
+                                        }
+                                    }
 
                                     // Run the inference
                                     float[][] output = new float[1][1];
                                     tflite.run(input, output);
 
                                     Log.d("MainActivity", "Output size: " + output.length);
+                                    Log.d("MainActivity", "Authenticity score: " + output[0][0]);
 
                                     // Determine the authenticity of the image based on the output
                                     String authenticity;
@@ -158,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
                                     Log.d("MainActivity", "Model not run!");
                                     e.printStackTrace();
                                 }
+
                             }).addOnFailureListener(e -> Snackbar.make(rootView, "Failed to get download URL: " + e.getMessage(), Snackbar.LENGTH_LONG).show());
 
 

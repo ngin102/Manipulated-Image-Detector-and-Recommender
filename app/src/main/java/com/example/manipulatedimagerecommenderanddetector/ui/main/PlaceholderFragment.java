@@ -31,15 +31,11 @@ import java.util.List;
 import java.util.Map;
 
 public class PlaceholderFragment extends Fragment {
-
     private static final String ARG_SECTION_NUMBER = "section_number";
-
     private PageViewModel pageViewModel;
     private FragmentMainBinding binding;
-
     private FirebaseStorage storage = FirebaseStorage.getInstance();
     private StorageReference imagesRef = storage.getReference().child("images");
-
     private boolean imageJustUploaded = false;
     private StorageReference uploadedImageRef;
 
@@ -67,6 +63,7 @@ public class PlaceholderFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
+
 
         ArrayList<String> imageFilenames = new ArrayList<>();
         imagesRef.listAll()
