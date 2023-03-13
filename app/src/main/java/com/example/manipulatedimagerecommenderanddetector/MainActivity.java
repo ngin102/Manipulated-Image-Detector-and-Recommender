@@ -77,17 +77,26 @@ public class MainActivity extends AppCompatActivity {
         ViewPager viewPager = binding.viewPager;
         viewPager.setAdapter(sectionsPagerAdapter);
 
+
         TabLayout tabs = binding.tabs;
         tabs.setupWithViewPager(viewPager);
 
-        FloatingActionButton fab = binding.fab;
         View rootView = binding.getRoot();
-        fab.setOnClickListener(view -> {
+
+        FloatingActionButton uploadFab = findViewById(R.id.uploadFab);
+        uploadFab.setOnClickListener(view -> {
             Intent intent = new Intent();
             intent.setType("image/jpeg"); // only accept JPG images
             intent.setAction(Intent.ACTION_GET_CONTENT);
             activityResultLauncher.launch(Intent.createChooser(intent, "Select Picture"));
         });
+
+        FloatingActionButton refreshFab = findViewById(R.id.refreshFab);
+        refreshFab.setOnClickListener(view -> {
+            PlaceholderFragment placeholderFragment = (PlaceholderFragment) sectionsPagerAdapter.instantiateItem(viewPager, viewPager.getCurrentItem());
+            placeholderFragment.refreshGrid();
+        });
+
 
         activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -163,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
                                     saveImageAuthenticityToDatabase(imageRef.getName(), authenticity);
                                     getImageTags(imageRef.getName());
                                     Snackbar.make(rootView, "Image uploaded successfully", Snackbar.LENGTH_LONG).show();
-
+                                    
                                 } catch (IOException e) {
                                     Log.d("MainActivity", "Model not run!");
                                     e.printStackTrace();

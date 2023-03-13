@@ -39,7 +39,6 @@ public class PlaceholderFragment extends Fragment {
     private boolean imageJustUploaded = false;
     private StorageReference uploadedImageRef;
 
-
     public static PlaceholderFragment newInstance(int index) {
         PlaceholderFragment fragment = new PlaceholderFragment();
         Bundle bundle = new Bundle();
@@ -123,7 +122,7 @@ public class PlaceholderFragment extends Fragment {
                                     // ...
                                 }
                             });
-                            continue;
+
                         } else {
                             imageFilenames.add(filename);
 
@@ -178,15 +177,9 @@ public class PlaceholderFragment extends Fragment {
     }
 
     public void refreshGrid() {
-        ArrayList<String> imageFilenames = new ArrayList<>();
         StorageReference imagesRef = storage.getReference().child("images");
         imagesRef.listAll()
                 .addOnSuccessListener(listResult -> {
-                    for (StorageReference item : listResult.getItems()) {
-                        String filename = item.getName();
-                        imageFilenames.add(filename);
-                    }
-
                     // Check if an image has just been uploaded
                     if (imageJustUploaded && uploadedImageRef != null) {
                         // If an image has just been uploaded, make sure it's the first image on the screen
@@ -361,8 +354,7 @@ public class PlaceholderFragment extends Fragment {
             }
         }
 
-        double cosineSimilarity = dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
-        return cosineSimilarity;
+        return dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
     }
 
     private double computeMagnitude(Map<String, Integer> tags1) {

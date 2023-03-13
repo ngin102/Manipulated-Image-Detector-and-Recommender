@@ -2,4 +2,8 @@
     <string name="app_name">Manipulated Image Recommender and Detector</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
+    <string name="tab_layout">Tab layout</string>
+    <string name="viewpager">ViewPager</string>
+    <string name="uploadfab">uploadFab</string>
+    <string name="refreshfab">refreshFab</string>
 </resources>
