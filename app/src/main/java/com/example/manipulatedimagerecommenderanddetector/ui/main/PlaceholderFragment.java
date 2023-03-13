@@ -2,6 +2,7 @@ package com.example.manipulatedimagerecommenderanddetector.ui.main;
 
 import androidx.lifecycle.ViewModelProvider;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,9 +13,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.GridView;
 
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
+import com.example.manipulatedimagerecommenderanddetector.MainActivity;
+import com.example.manipulatedimagerecommenderanddetector.R;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -62,7 +68,6 @@ public class PlaceholderFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
-
 
         ArrayList<String> imageFilenames = new ArrayList<>();
         imagesRef.listAll()
