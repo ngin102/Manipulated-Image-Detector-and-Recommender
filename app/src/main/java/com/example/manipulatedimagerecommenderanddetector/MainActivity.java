@@ -93,10 +93,11 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton refreshFab = findViewById(R.id.refreshFab);
         refreshFab.setOnClickListener(view -> {
-            PlaceholderFragment placeholderFragment = (PlaceholderFragment) sectionsPagerAdapter.instantiateItem(viewPager, viewPager.getCurrentItem());
+            PlaceholderFragment placeholderFragment = (PlaceholderFragment) sectionsPagerAdapter.instantiateItem(viewPager, 0);
+            placeholderFragment.refreshGrid();
+            placeholderFragment = (PlaceholderFragment) sectionsPagerAdapter.instantiateItem(viewPager, 1);
             placeholderFragment.refreshGrid();
         });
-
 
         activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                         // Check if the selected image is a JPG
                         String fileType = getContentResolver().getType(imageUri);
                         if (!TextUtils.equals(fileType, "image/jpeg")) {
-                            Snackbar.make(rootView, "Only JPG images are accepted", Snackbar.LENGTH_LONG).show();
+                            Snackbar.make(rootView, "Please only upload JPEG images.", Snackbar.LENGTH_LONG).show();
                             return;
                         }
 
@@ -124,12 +125,8 @@ public class MainActivity extends AppCompatActivity {
                                 // Refresh both placeholder fragments to show the newly uploaded image
                                 PlaceholderFragment placeholderFragment1 = (PlaceholderFragment) getSupportFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":0");
                                 PlaceholderFragment placeholderFragment2 = (PlaceholderFragment) getSupportFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":1");
-                                if (placeholderFragment1 != null && placeholderFragment2 != null) {
-                                    placeholderFragment1.setImageJustUploaded(true, imageRef);
-                                    placeholderFragment1.refreshGrid();
-                                    placeholderFragment2.setImageJustUploaded(true, imageRef);
-                                    placeholderFragment2.refreshGrid();
-                                }
+                                placeholderFragment1.setImageJustUploaded(true, imageRef);
+                                placeholderFragment2.setImageJustUploaded(true, imageRef);
 
                                 // Use the image file with the model to determine its authenticity and save the result to Firebase Database
                                 try {
@@ -171,8 +168,15 @@ public class MainActivity extends AppCompatActivity {
                                     // Save the authenticity to Firebase Database
                                     saveImageAuthenticityToDatabase(imageRef.getName(), authenticity);
                                     getImageTags(imageRef.getName());
-                                    Snackbar.make(rootView, "Image uploaded successfully", Snackbar.LENGTH_LONG).show();
-                                    
+                                    Snackbar.make(rootView, "Image uploaded successfully. Retrieving recommendations.", Snackbar.LENGTH_LONG).show();
+
+                                    refreshFab.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            refreshFab.performClick();
+                                        }
+                                    }, 2000);
+
                                 } catch (IOException e) {
                                     Log.d("MainActivity", "Model not run!");
                                     e.printStackTrace();

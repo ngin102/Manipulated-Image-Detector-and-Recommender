@@ -2,7 +2,6 @@ package com.example.manipulatedimagerecommenderanddetector.ui.main;
 
 import androidx.lifecycle.ViewModelProvider;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,14 +12,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.GridView;
 
 import com.example.manipulatedimagerecommenderanddetector.GridAdapter;
-import com.example.manipulatedimagerecommenderanddetector.MainActivity;
-import com.example.manipulatedimagerecommenderanddetector.R;
 import com.example.manipulatedimagerecommenderanddetector.databinding.FragmentMainBinding;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -88,36 +83,13 @@ public class PlaceholderFragment extends Fragment {
                                         // Set the badge image based on the image authenticity status
                                         if (authenticity != null && authenticity.equals("au")) {
                                             imageFilenames.add(filename);
-                                            Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
-                                        } else if (authenticity != null && authenticity.equals("tp")) {
-                                            Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
                                         }
+                                        Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
+
                                         // Check if an image has just been uploaded
-                                        if (imageJustUploaded) {
-                                            // If an image has just been uploaded, make sure it's the first image on the screen
-                                            String uploadedImageFilename = uploadedImageRef.getName();
-                                            int index = imageFilenames.indexOf(uploadedImageFilename);
-                                            if (index > 0) {
-                                                imageFilenames.remove(index);
-                                                imageFilenames.add(0, uploadedImageFilename);
-                                            }
-
-                                            // Reset the flag and the reference to the uploaded image
-                                            imageJustUploaded = false;
-                                            uploadedImageRef = null;
+                                        if (! imageJustUploaded) {
+                                            randomizeGrid(imageFilenames);
                                         }
-
-                                        // Randomly select 6 images from the list of filenames
-                                        ArrayList<String> selectedImageFilenames = new ArrayList<>();
-                                        Collections.shuffle(imageFilenames);
-                                        for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
-                                            selectedImageFilenames.add(imageFilenames.get(i));
-                                        }
-
-                                        // Set the adapter for the grid view
-                                        GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
-                                        binding.gridView.setAdapter(gridAdapter);
-                                        gridAdapter.notifyDataSetChanged();
                                     }
                                 }
 
@@ -130,34 +102,12 @@ public class PlaceholderFragment extends Fragment {
 
                         } else {
                             imageFilenames.add(filename);
-
-                            // Check if an image has just been uploaded
-                            if (imageJustUploaded) {
-                                // If an image has just been uploaded, make sure it's the first image on the screen
-                                String uploadedImageFilename = uploadedImageRef.getName();
-                                int index = imageFilenames.indexOf(uploadedImageFilename);
-                                if (index > 0) {
-                                    imageFilenames.remove(index);
-                                    imageFilenames.add(0, uploadedImageFilename);
-                                }
-
-                                // Reset the flag and the reference to the uploaded image
-                                imageJustUploaded = false;
-                                uploadedImageRef = null;
-                            }
-
-                            // Randomly select 6 images from the list of filenames
-                            ArrayList<String> selectedImageFilenames = new ArrayList<>();
-                            Collections.shuffle(imageFilenames);
-                            for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
-                                selectedImageFilenames.add(imageFilenames.get(i));
-                            }
-
-                            // Set the adapter for the grid view
-                            GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
-                            binding.gridView.setAdapter(gridAdapter);
-                            gridAdapter.notifyDataSetChanged();
                         }
+                    }
+
+                    // Check if an image has just been uploaded
+                    if (! imageJustUploaded && pageViewModel.getIndex() == 1) {
+                        randomizeGrid(imageFilenames);
                     }
                 })
                 .addOnFailureListener(exception -> {
@@ -174,6 +124,21 @@ public class PlaceholderFragment extends Fragment {
         binding = null;
     }
 
+    public void randomizeGrid(ArrayList<String> imageFilenames)
+    {
+        // Randomly select 6 images from the list of filenames
+        ArrayList<String> selectedImageFilenames = new ArrayList<>();
+        Collections.shuffle(imageFilenames);
+        for (int i = 0; i < 6 && i < imageFilenames.size(); i++) {
+            selectedImageFilenames.add(imageFilenames.get(i));
+        }
+
+        // Set the adapter for the grid view
+        GridAdapter gridAdapter = new GridAdapter(getActivity(), selectedImageFilenames);
+        binding.gridView.setAdapter(gridAdapter);
+        gridAdapter.notifyDataSetChanged();
+    }
+
     public void setImageJustUploaded(boolean justUploaded, StorageReference uploadedImageRef) {
         imageJustUploaded = justUploaded;
         this.uploadedImageRef = uploadedImageRef;
@@ -185,14 +150,20 @@ public class PlaceholderFragment extends Fragment {
         StorageReference imagesRef = storage.getReference().child("images");
         imagesRef.listAll()
                 .addOnSuccessListener(listResult -> {
+                    // If an image has just been uploaded, make sure it's the first image on the screen
                     // Check if an image has just been uploaded
                     if (imageJustUploaded && uploadedImageRef != null) {
                         // If an image has just been uploaded, make sure it's the first image on the screen
                         String uploadedImageFilename = uploadedImageRef.getName();
+                        // Reset the flag and the reference to the uploaded image
+                        imageJustUploaded = false;
+                        uploadedImageRef = null;
                         // recommendImage sets the adapter for the grid view
                         recommendImages(uploadedImageFilename);
-                    }
 
+                    } else {
+                        Snackbar.make(binding.gridView, "No image upload detected. Can not retrieve recommendations.", Snackbar.LENGTH_LONG).show();
+                    }
                 })
                 .addOnFailureListener(exception -> {
                     // Handle errors while retrieving the list of image filenames from Firebase Storage
@@ -200,7 +171,89 @@ public class PlaceholderFragment extends Fragment {
                 });
     }
 
-    private void recommendImages(String currentImageFilename) {
+    private void recommendImages(@Nullable String currentImageFilename) {
+        retrieveTags(currentImageFilename, inputTags -> {
+            double magnitude1 = computeMagnitude(inputTags);
+
+            retrieveAllTags(dataSnapshot -> {
+                HashMap<String, Double> similarImages = new HashMap<>();
+
+                // Compute the cosine similarity between the input image and all other images
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String filename = snapshot.getKey();
+
+                    if (!filename.equals(currentImageFilename)) {
+                        // Get the tags for the current image
+                        String tagsString = snapshot.getValue(String.class);
+                        String[] tagArray = tagsString.split(", ");
+                        HashMap<String, Integer> tags = new HashMap<>();
+                        for (String tag : tagArray) {
+                            tags.put(tag, tags.getOrDefault(tag, 0) + 1);
+                        }
+
+                        // Compute the cosine similarity between the input image and the current image
+                        double similarity = computeCosineSimilarity(inputTags, tags, magnitude1);
+
+                        // If the cosine similarity is above a certain threshold, add the current image to the list of similar images
+                        similarImages.put(filename, similarity);
+                    }
+                }
+
+                // Sort the map by decreasing value
+                List<Map.Entry<String, Double>> list = new ArrayList<>(similarImages.entrySet());
+                list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+                ArrayList<String> imageFilenames = new ArrayList<>();
+
+                imageFilenames.add(currentImageFilename);
+
+                if (list.size() > 6 || list.size() == 6) {
+                    for (int i = 0; i < 5; i++) {
+                        imageFilenames.add(list.get(i).getKey());
+                    }
+                } else {
+                    for (int i = 0; i < list.size(); i++) {
+                        imageFilenames.add(list.get(i).getKey());
+                    }
+                }
+
+                if (pageViewModel.getIndex() == 2) {
+                    retrieveImageAuthenticity(dataSnapshot1 -> {
+                        ArrayList<String> filteredImageFilenames = new ArrayList<>();
+
+                        filteredImageFilenames.add(imageFilenames.get(0));
+
+                        for (DataSnapshot snapshot : dataSnapshot1.getChildren()) {
+                            String filename = snapshot.getKey();
+                            String authenticity = snapshot.getValue(String.class);
+
+                            if (imageFilenames.contains(filename)) {
+                                if (authenticity != null && authenticity.equals("au")) {
+                                    filteredImageFilenames.add(filename);
+                                    Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
+                                }
+                            }
+                        }
+
+                        ArrayList<String> orderedFilteredList = new ArrayList<>();
+                        for (String item : imageFilenames) {
+                            if (filteredImageFilenames.contains(item)) {
+                                orderedFilteredList.add(item);
+                            }
+                        }
+
+                        // Update the grid view with the filtered and ordered list
+                        updateGridView(orderedFilteredList);
+                    });
+                } else {
+                    // Update the grid view with the recommended images
+                    updateGridView(imageFilenames);
+                }
+            });
+        });
+    }
+
+    private void retrieveTags(String currentImageFilename, OnTagsRetrievedListener listener) {
         DatabaseReference tagsRef = FirebaseDatabase.getInstance().getReference().child("Image Tags").child(currentImageFilename);
         tagsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -212,126 +265,7 @@ public class PlaceholderFragment extends Fragment {
                     for (String tag : tagArray) {
                         inputTags.put(tag, inputTags.getOrDefault(tag, 0) + 1);
                     }
-
-                    double magnitude1 = computeMagnitude(inputTags);
-
-                    // Get the list of all image filenames and their tags from Firebase Realtime Database
-                    DatabaseReference allTagsRef = FirebaseDatabase.getInstance().getReference().child("Image Tags");
-                    allTagsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists()) {
-                                HashMap<String, Double> similarImages = new HashMap<>();
-
-                                // Compute the cosine similarity between the input image and all other images
-                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                    String filename = snapshot.getKey();
-
-                                    if (!filename.equals(currentImageFilename)) {
-                                        // Get the tags for the current image
-                                        String tagsString = snapshot.getValue(String.class);
-                                        String[] tagArray = tagsString.split(", ");
-                                        HashMap<String, Integer> tags = new HashMap<>();
-                                        for (String tag : tagArray) {
-                                            tags.put(tag, tags.getOrDefault(tag, 0) + 1);
-                                        }
-
-                                        // Compute the cosine similarity between the input image and the current image
-                                        double similarity = computeCosineSimilarity(inputTags, tags, magnitude1);
-
-                                        // If the cosine similarity is above a certain threshold, add the current image to the list of similar images
-                                        similarImages.put(filename, similarity);
-                                    }
-                                }
-
-                                // Sort the map by decreasing value
-                                List<Map.Entry<String, Double>> list = new ArrayList<>(similarImages.entrySet());
-                                list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-
-                                ArrayList<String> imageFilenames = new ArrayList<>();
-
-                                imageFilenames.add(currentImageFilename);
-
-                                if (list.size() > 6 || list.size() == 6) {
-                                    for (int i = 0; i < 5; i++) {
-                                        imageFilenames.add(list.get(i).getKey());
-                                    }
-                                }
-                                else {
-                                    for (int i = 0; i < list.size(); i++) {
-                                        imageFilenames.add(list.get(i).getKey());
-                                    }
-                                }
-
-                                StringBuilder sb = new StringBuilder();
-                                for (Map.Entry<String, Double> entry : list) {
-                                    sb.append(entry.getKey()).append(": ").append(String.format("%.2f", entry.getValue())).append(", ");
-                                }
-                                String similarityScoresString = sb.toString();
-
-                                Log.d("PlaceholderFragment", "Similarity scores: " + similarityScoresString);
-                                Log.d("PlaceholderFragment", "# of Recommended images: " + (imageFilenames.size() - 1));
-
-                                if (pageViewModel.getIndex() == 2) {
-                                    // Check the image authenticity status in Firebase Realtime Database
-                                    DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity");
-                                    authenticityRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                            if (dataSnapshot.exists()) {
-                                                ArrayList<String> filteredImageFilenames = new ArrayList<>();
-
-                                                filteredImageFilenames.add(imageFilenames.get(0));
-
-                                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                                    String filename = snapshot.getKey();
-                                                    String authenticity = snapshot.getValue(String.class);
-
-                                                    if (imageFilenames.contains(filename)) {
-                                                        if (authenticity != null && authenticity.equals("au")) {
-                                                            filteredImageFilenames.add(filename);
-                                                            Log.d("PlaceholderFragment", filename + " authenticity: " + authenticity);
-                                                        }
-                                                    }
-                                                }
-
-                                                ArrayList<String> orderedFilteredList = new ArrayList<>();
-                                                for (String item : imageFilenames) {
-                                                    if (filteredImageFilenames.contains(item)) {
-                                                        orderedFilteredList.add(item);
-                                                    }
-                                                }
-
-                                                // Set the adapter for the grid view
-                                                GridAdapter gridAdapter = new GridAdapter(getActivity(), orderedFilteredList);
-                                                binding.gridView.setAdapter(gridAdapter);
-                                                gridAdapter.notifyDataSetChanged();
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                                            // Handle errors while retrieving the image authenticity status
-                                            // ...
-                                        }
-                                    });
-                                }
-                                else
-                                {
-                                    // Display the recommended images in the grid view
-                                    GridAdapter gridAdapter = new GridAdapter(getActivity(), imageFilenames);
-                                    binding.gridView.setAdapter(gridAdapter);
-                                    gridAdapter.notifyDataSetChanged();
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                            // Handle errors while retrieving the image tags from Firebase Realtime Database
-                            // ...
-                        }
-                    });
+                    listener.onTagsRetrieved(inputTags);
                 }
             }
 
@@ -341,6 +275,61 @@ public class PlaceholderFragment extends Fragment {
                 // ...
             }
         });
+    }
+
+    private void retrieveAllTags(OnAllTagsRetrievedListener listener) {
+        DatabaseReference allTagsRef = FirebaseDatabase.getInstance().getReference().child("Image Tags");
+        allTagsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    listener.onAllTagsRetrieved(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors while retrieving the image tags from Firebase Realtime Database
+                // ...
+            }
+        });
+    }
+
+    private void retrieveImageAuthenticity(OnImageAuthenticityRetrievedListener listener) {
+        DatabaseReference authenticityRef = FirebaseDatabase.getInstance().getReference().child("Image Authenticity");
+        authenticityRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    listener.onImageAuthenticityRetrieved(dataSnapshot);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors while retrieving the image authenticity status
+                // ...
+            }
+        });
+    }
+
+    private void updateGridView(ArrayList<String> imageFilenames) {
+        GridAdapter gridAdapter = new GridAdapter(getActivity(), imageFilenames);
+        binding.gridView.setAdapter(gridAdapter);
+        Snackbar.make(binding.gridView, "Image recommendations retrieved.", Snackbar.LENGTH_LONG).show();
+        gridAdapter.notifyDataSetChanged();
+    }
+
+    interface OnTagsRetrievedListener {
+        void onTagsRetrieved(HashMap<String, Integer> inputTags);
+    }
+
+    interface OnAllTagsRetrievedListener {
+        void onAllTagsRetrieved(DataSnapshot dataSnapshot);
+    }
+
+    interface OnImageAuthenticityRetrievedListener {
+        void onImageAuthenticityRetrieved(DataSnapshot dataSnapshot);
     }
 
     private double computeCosineSimilarity(Map<String, Integer> tags1, Map<String, Integer> tags2, double magnitude1) {
@@ -370,8 +359,4 @@ public class PlaceholderFragment extends Fragment {
         }
         return magnitude1;
     }
-
-
-
 }
-
