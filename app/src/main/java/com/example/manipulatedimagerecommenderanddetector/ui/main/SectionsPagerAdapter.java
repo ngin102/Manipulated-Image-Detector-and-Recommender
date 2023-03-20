@@ -14,6 +14,8 @@ import androidx.fragment.app.FragmentPagerAdapter;
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
  * one of the sections/tabs/pages.
+ *
+ * This is code that was provided by Android Studio (only line 24 was changed to indicate tab titles).
  */
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
