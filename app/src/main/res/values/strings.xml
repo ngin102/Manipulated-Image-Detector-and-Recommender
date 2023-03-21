@@ -6,4 +6,5 @@
     <string name="viewpager">ViewPager</string>
     <string name="uploadfab">uploadFab</string>
     <string name="refreshfab">refreshFab</string>
+    <string name="image">Image</string>
 </resources>

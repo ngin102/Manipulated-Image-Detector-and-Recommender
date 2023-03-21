@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Load a given model.
     private MappedByteBuffer loadModel(Context context) throws IOException {
-        AssetFileDescriptor fileDescriptor = context.getAssets().openFd("manipulation_detector_v2.tflite");
+        AssetFileDescriptor fileDescriptor = context.getAssets().openFd("manipulation_detector_v5.tflite");
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
         FileChannel fileChannel = inputStream.getChannel();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, fileDescriptor.getStartOffset(), fileDescriptor.getDeclaredLength());
@@ -234,8 +234,10 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                                 databaseRef.child(filename).setValue(tags.toString())
-                                        .addOnSuccessListener(aVoid -> Log.d("MainActivity", "Image tags saved to database for filename: " + filename))
-                                        .addOnFailureListener(e -> Log.d("MainActivity", "Failed to save image tags to database for filename: " + filename));
+                                        .addOnSuccessListener(aVoid -> Log.d("MainActivity", "Image tags saved to " +
+                                                "database for filename: " + filename))
+                                        .addOnFailureListener(e -> Log.d("MainActivity", "Failed to save image tags " +
+                                                "to database for filename: " + filename));
                             })
                             .addOnFailureListener(e -> Log.e(TAG, "Can not process and tag the image.", e));
                 }
