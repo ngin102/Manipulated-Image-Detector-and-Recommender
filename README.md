@@ -1,4 +1,4 @@
-# manipulated-image-detector-and-recommender
+# Manipulated Image Detector and Recommender
 
 The Manipulated Image Detector and Recommender is a mobile Android application for image manipulation detection and image recommendations.
 
